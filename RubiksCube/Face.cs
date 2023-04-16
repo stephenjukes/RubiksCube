@@ -18,30 +18,28 @@ namespace RubiksCube
 
     public class Face
     {
-        public Face(Orientation orientation, Func<Cubelet, bool> isOfOrientation)
-        {
-            Orientation = orientation;
-            IsOfOrientation = isOfOrientation;
-        }
-
         public Orientation Orientation { get; set; }
 
-        public int OrientationIndex { get; set; }
-
-        public Func<Cubelet, bool> IsOfOrientation { get; set; }
+        public Func<Coordinate, bool> IsOfOrientation { get; set; }
     }
 
     public class CubeletFace : Face
     {
-        public CubeletFace(
-            Orientation orientation,
-            Color color,
-            Func<Cubelet, bool> isOfOrientation
-            ) : base(orientation, isOfOrientation)
-        {
-            Color = color;
-        }
+        public Color Color { get; set; }
+
+        public override string ToString() => $"{Orientation}: {Color}";
+    }
+
+    // New class needed since cannot deep clone Func
+    public class CubeletFace1
+    {
+        public Orientation Orientation { get; set; }
 
         public Color Color { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Orientation}: {Color}";
+        }
     }
 }

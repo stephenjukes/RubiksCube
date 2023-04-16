@@ -8,6 +8,7 @@ namespace RubiksCube
 {
     public enum Hue
     {
+        Null,
         Green,
         White,
         Red,

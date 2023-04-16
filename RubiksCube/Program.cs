@@ -4,8 +4,22 @@
 using RubiksCube;
 
 var cube = new Cube();
+
+var rotations = new Instruction[]
+{
+    new Instruction(Orientation.Front, Direction.Clockwise),
+};
+
+Console.WriteLine("Initial State ...\n");
 cube.Display();
 
-cube.Rotate(Orientation.Front, Direction.Clockwise);
+foreach (var rotation in rotations)
+{
+    var orientation = rotation.Orientation;
+    var direction = rotation.Direction;
 
-cube.Display();
+    Console.WriteLine($"{direction} {orientation} Rotation ...\n");
+
+    cube.Rotate(orientation, direction);
+    cube.Display();
+}

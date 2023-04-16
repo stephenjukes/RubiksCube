@@ -15,4 +15,11 @@ namespace RubiksCube
         Left,
         Right
     }
+
+    //public class Orientation
+    //{
+    //    public string Type { get; set; }
+
+    //    public int MyProperty { get; set; }
+    //}
 }

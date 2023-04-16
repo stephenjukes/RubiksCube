@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,25 +22,25 @@ namespace RubiksCube
 
         // color isn't alwasy needed. Do we need inheritance?
         // is this really config?
-        public static CubeletFace[] InitialFaces = new CubeletFace[]
+        public static ReadOnlyCollection<CubeletFace> InitialFaces => new List<CubeletFace>
         {
-            new CubeletFace(Orientation.Top, Colors[Hue.Green], cubelet => cubelet.Coordinate.Y == 1),
-            new CubeletFace(Orientation.Bottom, Colors[Hue.White], cubelet => cubelet.Coordinate.Y == -1),
-            new CubeletFace(Orientation.Front, Colors[Hue.Red], cubelet => cubelet.Coordinate.Z == -1),
-            new CubeletFace(Orientation.Back, Colors[Hue.Yellow], cubelet => cubelet.Coordinate.Z == 1),
-            new CubeletFace(Orientation.Left, Colors[Hue.Blue], cubelet => cubelet.Coordinate.X == -1),
-            new CubeletFace(Orientation.Right, Colors[Hue.Orange], cubelet => cubelet.Coordinate.X == 1),
-        };
+            new CubeletFace { Orientation = Orientation.Top,    Color = Colors[Hue.Green],  IsOfOrientation = coordinate => coordinate.Y == 1 },
+            new CubeletFace { Orientation = Orientation.Bottom, Color = Colors[Hue.White],  IsOfOrientation = coordinate => coordinate.Y == -1 },
+            new CubeletFace { Orientation = Orientation.Front,  Color = Colors[Hue.Red],    IsOfOrientation = coordinate => coordinate.Z == -1 },
+            new CubeletFace { Orientation = Orientation.Back,   Color = Colors[Hue.Yellow], IsOfOrientation = coordinate => coordinate.Z == 1 },
+            new CubeletFace { Orientation = Orientation.Left,   Color = Colors[Hue.Blue],   IsOfOrientation = coordinate => coordinate.X == -1 },
+            new CubeletFace { Orientation = Orientation.Right,  Color = Colors[Hue.Orange], IsOfOrientation = coordinate => coordinate.X == 1 },
+        }.AsReadOnly(); // This doesn't seem to be working as ReadOnly
 
-        // is this really config?
-        public static Dictionary<Orientation, Orientation[]> ClockwiseTurns = new Dictionary<Orientation, Orientation[]>
+        public static readonly Dictionary<Orientation, Func<IEnumerable<Cubelet>, IEnumerable<IGrouping<int, Cubelet>>>> OrderCubelets
+            = new Dictionary<Orientation, Func<IEnumerable<Cubelet>, IEnumerable<IGrouping<int, Cubelet>>>>
         {
-            { Orientation.Top, new Orientation[] { Orientation.Front, Orientation.Left, Orientation.Back, Orientation.Right } },
-            { Orientation.Bottom, new Orientation[] { Orientation.Front, Orientation.Right, Orientation.Back, Orientation.Left } },
-            { Orientation.Front, new Orientation[] { Orientation.Top, Orientation.Right, Orientation.Bottom, Orientation.Left } },
-            { Orientation.Back, new Orientation[] { Orientation.Top, Orientation.Left, Orientation.Bottom, Orientation.Right } },
-            { Orientation.Left, new Orientation[] { Orientation.Top, Orientation.Front, Orientation.Bottom, Orientation.Back } },
-            { Orientation.Right, new Orientation[] { Orientation.Top, Orientation.Back, Orientation.Bottom, Orientation.Front } },
+            { Orientation.Front, cubes => cubes.OrderByDescending(c => c.Coordinate.Y).ThenBy(c => c.Coordinate.X).GroupBy(c => c.Coordinate.Y) },
+            { Orientation.Back, cubes => cubes.OrderByDescending(c => c.Coordinate.Y).ThenByDescending(c => c.Coordinate.X).GroupBy(c => c.Coordinate.Y) },
+            { Orientation.Left, cubes => cubes.OrderByDescending(c => c.Coordinate.Y).ThenByDescending(c => c.Coordinate.Z).GroupBy(c => c.Coordinate.Y) },
+            { Orientation.Right, cubes => cubes.OrderByDescending(c => c.Coordinate.Y).ThenBy(c => c.Coordinate.Z).GroupBy(c => c.Coordinate.Y) },
+            { Orientation.Top, cubes => cubes.OrderByDescending(c => c.Coordinate.Z).ThenBy(c => c.Coordinate.X).GroupBy(c => c.Coordinate.Z) },
+            { Orientation.Bottom, cubes => cubes.OrderBy(c => c.Coordinate.Z).ThenBy(c => c.Coordinate.X).GroupBy(c => c.Coordinate.Z) }
         };
     }
 }
