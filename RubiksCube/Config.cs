@@ -20,16 +20,17 @@ namespace RubiksCube
             { Hue.Orange,   new Color(Hue.Orange, 'O', ConsoleColor.Magenta) },
         };
 
+        // USE APPSETTINGS
         // color isn't alwasy needed. Do we need inheritance?
         // is this really config?
         public static ReadOnlyCollection<CubeletFace> InitialFaces => new List<CubeletFace>
         {
-            new CubeletFace { Orientation = Orientation.Top,    Color = Colors[Hue.White] },
-            new CubeletFace { Orientation = Orientation.Bottom, Color = Colors[Hue.Yellow] },
-            new CubeletFace { Orientation = Orientation.Front,  Color = Colors[Hue.Green] },
-            new CubeletFace { Orientation = Orientation.Back,   Color = Colors[Hue.Blue] },
-            new CubeletFace { Orientation = Orientation.Left,   Color = Colors[Hue.Orange] },
-            new CubeletFace { Orientation = Orientation.Right,  Color = Colors[Hue.Red] },
+            new CubeletFace(Orientation.Top,    Colors[Hue.White]),
+            new CubeletFace(Orientation.Bottom, Colors[Hue.Yellow]),
+            new CubeletFace(Orientation.Front,  Colors[Hue.Green]),
+            new CubeletFace(Orientation.Back,   Colors[Hue.Blue]),
+            new CubeletFace(Orientation.Left,   Colors[Hue.Orange]),
+            new CubeletFace(Orientation.Right,  Colors[Hue.Red]),
         }.AsReadOnly(); // This doesn't seem to be working as ReadOnly
 
         public static readonly Dictionary<Orientation, Func<IEnumerable<Cubelet>, IEnumerable<IGrouping<int, Cubelet>>>> ArrangeCubelets
@@ -44,3 +45,4 @@ namespace RubiksCube
         };
     }
 }
+

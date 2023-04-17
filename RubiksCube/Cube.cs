@@ -5,20 +5,23 @@
         private readonly int _size;
         private readonly int _boundaryCoordinate;
         private readonly List<Cubelet> _cubelets = new List<Cubelet>();
+        private readonly Dictionary<Orientation, CubeFace> _faces;
 
         public Cube(int size = 3)
         {
             _size = size; 
             _boundaryCoordinate = size / 2;
+            _faces = ConfigureFaces();
             PopulateCube();
-
         }
 
         public void Rotate(Orientation orientation, Direction direction)
         {
+            var face = _faces[orientation];
+
             var rotationRing = _cubelets
-                .Where(c => IsInCubeFace(c.Coordinate, orientation) && !c.IsCenter)
-                .OrderBy(c => (direction == Direction.Clockwise ? 1 : -1) * Clockwise(c, orientation))
+                .Where(c => face.HasCoordinate(c.Coordinate) && !c.IsCenter)
+                .OrderBy(c => (direction == Direction.Clockwise ? 1 : -1) * face.GetRotationRank(c.Coordinate))
                 .ToArray();
 
             var staticCoordinates = rotationRing
@@ -35,47 +38,16 @@
             }
         }
 
-        private bool IsInCubeFace(Coordinate coordinate, Orientation orientation)
-        {
-            var cubeletsByFace = new Dictionary<Orientation, Func<Coordinate, bool>>
-            {
-                { Orientation.Top,      c => c.Y == _boundaryCoordinate },
-                { Orientation.Bottom,   c => c.Y == -_boundaryCoordinate },
-                { Orientation.Left,     c => c.X == -_boundaryCoordinate },
-                { Orientation.Right,    c => c.X == _boundaryCoordinate },
-                { Orientation.Front,    c => c.Z == -_boundaryCoordinate },
-                { Orientation.Back,     c => c.Z == _boundaryCoordinate },
-            };
-
-            return cubeletsByFace[orientation](coordinate);
-        }
-
-        private double AntiClockwise(Cubelet cubelet, Orientation orientation)
-        {
-            // Can we introduce an Orientation class to  remove the need for dictionaries?
-            var parametersByOrientation = new Dictionary<Orientation, RotationArrangement>
-            {
-                { Orientation.Front,    new RotationArrangement(cubelet.Coordinate.Y, cubelet.Coordinate.X) },
-                { Orientation.Back,     new RotationArrangement(cubelet.Coordinate.Y, -cubelet.Coordinate.X) },
-                { Orientation.Left,     new RotationArrangement(cubelet.Coordinate.Y, -cubelet.Coordinate.Z) },
-                { Orientation.Right,    new RotationArrangement(cubelet.Coordinate.Y, cubelet.Coordinate.Z) },
-                { Orientation.Top,      new RotationArrangement(cubelet.Coordinate.Z, cubelet.Coordinate.X) },
-                { Orientation.Bottom,   new RotationArrangement(-cubelet.Coordinate.Z, cubelet.Coordinate.X) },
-            };
-
-            return parametersByOrientation[orientation].OrderRank;
-        }
-
-        private double Clockwise(Cubelet cubelet, Orientation orientation) => 
-            -AntiClockwise(cubelet, orientation);
-
         public void Display()
         {
             // Better to group faces instead?
             foreach (var initialFace in Config.InitialFaces)
             {
+                // this could be done better
+                var face = _faces[initialFace.Orientation];
+
                 var cubeletsInFace = _cubelets
-                    .Where(c => IsInCubeFace(c.Coordinate, initialFace.Orientation));
+                    .Where(c => face.HasCoordinate(c.Coordinate));
 
                 var orderedFaces = Config
                     .ArrangeCubelets[initialFace.Orientation](cubeletsInFace)
@@ -125,20 +97,84 @@
             return i + 1;
         }
 
-        private CubeletFace AssignFaceColor(CubeletFace face, Coordinate coordinate)
+        private CubeletFace AssignFaceColor(CubeletFace cubeletFace, Coordinate coordinate)
         {
-            if (!IsInCubeFace(coordinate, face.Orientation))
+            var face = _faces[cubeletFace.Orientation];
+
+            if (!face.HasCoordinate(coordinate))
             { 
-                var color = new Color(Hue.Null, ' ', face.Color.ConsoleColor);
-                
-                return new CubeletFace 
-                { 
-                    Orientation = face.Orientation, 
-                    Color = color
-                };
+                var color = new Color(Hue.Null, ' ', cubeletFace.Color.ConsoleColor);
+
+                return new CubeletFace(cubeletFace.Orientation, color);
             }
 
-            return face;
+            return cubeletFace;
+        }
+
+        private Dictionary<Orientation, CubeFace> ConfigureFaces()
+        {
+            return new CubeFace[]
+            {
+                new CubeFace(
+                    Orientation.Top,
+                    hasCoordinate: c => c.Y == _boundaryCoordinate,
+                    getRotationRank: c => new RotationRankParameters(c.Z, c.X).OrderRank,
+                    arrangeForDisplay: c => c
+                        .OrderByDescending(c => c.Coordinate.Z)
+                        .ThenBy(c => c.Coordinate.X)
+                        .GroupBy(c => c.Coordinate.Z)
+                    ),
+
+                new CubeFace(
+                    Orientation.Bottom,
+                    hasCoordinate: c => c.Y == -_boundaryCoordinate,
+                    getRotationRank: c => new RotationRankParameters(-c.Z, c.X).OrderRank,
+                    arrangeForDisplay: c => c
+                        .OrderBy(c => c.Coordinate.Z)
+                        .ThenBy(c => c.Coordinate.X)
+                        .GroupBy(c => c.Coordinate.Z)
+                    ),
+
+                new CubeFace(
+                    Orientation.Front,
+                    hasCoordinate: c => c.Z == -_boundaryCoordinate,
+                    getRotationRank: c => new RotationRankParameters(c.Y, c.X).OrderRank,
+                    arrangeForDisplay: c => c
+                        .OrderByDescending(c => c.Coordinate.Y)
+                        .ThenBy(c => c.Coordinate.X)
+                        .GroupBy(c => c.Coordinate.Y)
+                    ),
+
+                new CubeFace(
+                    Orientation.Back,
+                    hasCoordinate: c => c.Z == _boundaryCoordinate,
+                    getRotationRank: c => new RotationRankParameters(c.Y, -c.X).OrderRank,
+                    arrangeForDisplay: c => c
+                        .OrderByDescending(c => c.Coordinate.Y)
+                        .ThenByDescending(c => c.Coordinate.X)
+                        .GroupBy(c => c.Coordinate.Y)
+                    ),
+
+                new CubeFace(
+                    Orientation.Left,
+                    hasCoordinate:  c => c.X == -_boundaryCoordinate,
+                    getRotationRank: c => new RotationRankParameters(c.Y, -c.Z).OrderRank,
+                    arrangeForDisplay: c => c
+                        .OrderByDescending(c => c.Coordinate.Y)
+                        .ThenByDescending(c => c.Coordinate.Z)
+                        .GroupBy(c => c.Coordinate.Y)
+                    ),
+
+                new CubeFace(
+                    Orientation.Right,
+                    hasCoordinate: c => c.X == _boundaryCoordinate,
+                    getRotationRank: c => new RotationRankParameters(c.Y, c.Z).OrderRank,
+                    arrangeForDisplay: c => c
+                        .OrderByDescending(c => c.Coordinate.Y)
+                        .ThenBy(c => c.Coordinate.Z)
+                        .GroupBy(c => c.Coordinate.Y)
+                    )
+            }.ToDictionary(face => face.Orientation);
         }
     }
 }

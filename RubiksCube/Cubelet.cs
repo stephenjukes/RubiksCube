@@ -35,13 +35,13 @@ namespace RubiksCube
 
         public Coordinate Coordinate { get; set; }
 
-        public bool IsCenter => (new int[] { Coordinate.X, Coordinate.Y, Coordinate.Z })
-            .Where(c => c == 0)
-            .Count() >= 2;
-
         // Cannot be IEnumerable
         // https://stackoverflow.com/questions/43856404/object-property-not-updating
         public CubeletFace[] Faces { get; set; }
+
+        public bool IsCenter => (new int[] { Coordinate.X, Coordinate.Y, Coordinate.Z })
+            .Where(c => c == 0)
+            .Count() >= 2;
 
         public CubeletFace GetFace(Orientation orientation)
         {

@@ -16,10 +16,21 @@ namespace RubiksCube
         Right
     }
 
-    //public class Orientation
-    //{
-    //    public string Type { get; set; }
+    public interface IOrientation
+    {
 
-    //    public int MyProperty { get; set; }
-    //}
+    } 
+
+    public class TopOrientation
+    {
+        public string Type { get; set; }
+
+
+
+        public Func<IEnumerable<Cubelet>, IEnumerable<IGrouping<int, Cubelet>>> ArrangeCubelets { get; } = 
+            cubes => cubes
+                .OrderByDescending(c => c.Coordinate.Y)
+                .ThenBy(c => c.Coordinate.X)
+                .GroupBy(c => c.Coordinate.Y);
+    }
 }

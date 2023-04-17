@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace RubiksCube
 {
-    public class RotationArrangement
+    public class RotationRankParameters
     {
-        public RotationArrangement(double dividend, double divisor)
+        public RotationRankParameters(double dividend, double divisor)
         {
             Dividend = dividend;
             Divisor = divisor != 0 ? divisor : 0.0001;
@@ -18,6 +18,6 @@ namespace RubiksCube
 
         public double Divisor { get; set; }
 
-        public double OrderRank => Math.Atan2(Dividend, Divisor);
+        public double OrderRank => -Math.Atan2(Dividend, Divisor);
     }
 }

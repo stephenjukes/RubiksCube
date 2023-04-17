@@ -1,10 +1,21 @@
-﻿// See https://aka.ms/new-console-template for more information
-// Console.WriteLine("Hello, World!");
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using RubiksCube;
 
 // Modeled in accordance with https://rubiks-cube-solver.com/
-// Use 'floating hidden sides' for verification
 
-using RubiksCube;
+var builder = new ConfigurationBuilder();
+builder.SetBasePath(Directory.GetCurrentDirectory())
+       .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+IConfiguration config = builder.Build();
+
+var initialFaceColors = config
+    .GetSection("InitialFaceColors")
+    .GetChildren()
+    .ToDictionary(
+        item => ToEnum<Orientation>(item.Key),
+        item => ToEnum<Hue>(item.Value));
 
 var cube = new Cube();
 
@@ -30,4 +41,10 @@ foreach (var instruction in instructions)
 
     cube.Rotate(orientation, direction);
     cube.Display();
+}
+
+static T ToEnum<T>(string value) where T : struct, IConvertible
+{
+    _ = Enum.TryParse(value, out T myEnum);
+    return myEnum;
 }
