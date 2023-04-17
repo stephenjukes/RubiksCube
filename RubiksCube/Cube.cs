@@ -4,35 +4,51 @@
     {
         private readonly List<Cubelet> _cubelets = new List<Cubelet>();
 
-        // consider allowing this to be set at instantiation
-        private readonly int _size = 3;
+        private readonly int _size;
+        private readonly int _boundaryCoordinate;
         
-        public Cube()
+        public Cube(int size = 3)
         {
+            _size = size; 
+            _boundaryCoordinate = size / 2;
+
             PopulateCube();
         }
 
         public void Rotate(Orientation orientation, Direction direction)
         {
-            var face = Config.InitialFaces.Single(f => f.Orientation == orientation);
-            var cubeletRing = _cubelets
-                .Where(c => face.IsOfOrientation(c.Coordinate))
-                .Where(c => !(c.Coordinate.Y == 0 && c.Coordinate.X == 0))
-                .OrderBy(Clockwise)
+            var rotationRing = _cubelets
+                .Where(c => IsInCubeFace(c.Coordinate, orientation) && !c.IsCenter)
+                .OrderBy(c => direction == Direction.Clockwise ? Clockwise(c) : AntiClockwise(c))
                 .ToArray();
 
-            var staticCoordinates = cubeletRing
+            var staticCoordinates = rotationRing
                 .Select(c => c.Coordinate)
                 .ToArray()
                 .DeepClone();
 
-            for (var i = 0; i < cubeletRing.Length; i++)
+            for (var i = 0; i < rotationRing.Length; i++)
             {
-                var cubelet = cubeletRing[i];
+                var cubelet = rotationRing[i];
 
-                cubelet.Coordinate = staticCoordinates[(i + 2) % staticCoordinates.Length];
+                cubelet.Coordinate = staticCoordinates[(i + _size - 1) % staticCoordinates.Length];
                 cubelet.Rotate(orientation, direction);
             }
+        }
+
+        private bool IsInCubeFace(Coordinate coordinate, Orientation orientation)
+        {
+            var cubeletsByFace = new Dictionary<Orientation, Func<Coordinate, bool>>
+            {
+                { Orientation.Top,      c => c.Y == _boundaryCoordinate },
+                { Orientation.Bottom,   c => c.Y == -_boundaryCoordinate },
+                { Orientation.Left,     c => c.X == -_boundaryCoordinate },
+                { Orientation.Right,    c => c.X == _boundaryCoordinate },
+                { Orientation.Front,    c => c.Z == -_boundaryCoordinate },
+                { Orientation.Back,     c => c.Z == _boundaryCoordinate },
+            };
+
+            return cubeletsByFace[orientation](coordinate);
         }
 
         private double AntiClockwise(Cubelet cubelet)
@@ -44,27 +60,24 @@
             return Math.Atan2(dividend, divisor);
         }
 
-        private double Clockwise(Cubelet cubelet)
-        {
-            return -AntiClockwise(cubelet);
-        }
+        private double Clockwise(Cubelet cubelet) => -AntiClockwise(cubelet);
 
-        // Some of this code is repeated
         public void Display()
         {
-            // Better to group cubelets instead?
+            // Better to group faces instead?
             foreach (var initialFace in Config.InitialFaces)
             {
-                var cubeletsInFace = _cubelets.Where(c => initialFace.IsOfOrientation(c.Coordinate));
+                var cubeletsInFace = _cubelets
+                    .Where(c => IsInCubeFace(c.Coordinate, initialFace.Orientation));
 
                 var orderedFaces = Config
-                    .OrderCubelets[initialFace.Orientation](cubeletsInFace)
+                    .ArrangeCubelets[initialFace.Orientation](cubeletsInFace)
                     .Select(group => string.Join(" ", group
                         .Select(cube => cube.GetFace(initialFace.Orientation).Color.Symbol)));
 
                 var orderedString = string.Join("\n", orderedFaces);
 
-                // Can this be returned as a string before being displayed?
+                // Abstract UI out
                 Console.WriteLine(initialFace.Orientation);
                 Console.WriteLine(orderedString);
                 Console.WriteLine();
@@ -73,15 +86,14 @@
 
         private void PopulateCube()
         {
-            // remove magic  numbers
-            for(var x = -1; x <= 1; x++)
+            for (var x = -_boundaryCoordinate; x <= _boundaryCoordinate; x = IncrementAccordingToSize(x))
             {
-                for(var y = -1; y <= 1; y++)
+                for(var y = -_boundaryCoordinate; y <= _boundaryCoordinate; y = IncrementAccordingToSize(y))
                 {
-                    for(var z = -1; z <= 1; z++)
+                    for(var z = -_boundaryCoordinate; z <= _boundaryCoordinate; z = IncrementAccordingToSize(z))
                     {
                         var coordinate = new Coordinate(x, y, z);
-                        var faces = Config.InitialFaces.Select(f => AssignFaceColor(f, coordinate));
+                        var faces = Config.InitialFaces.Select(face => AssignFaceColor(face, coordinate));
 
                         var cubelet = new Cubelet(coordinate, faces);
 
@@ -91,12 +103,32 @@
             }
         }
 
+        /// <summary>
+        /// Ensures symmetry either side of zero for both odd and even sizes. Odd sizes will include a zero while even sizes will not
+        /// </summary>
+        /// <param name="i">iterator</param>
+        /// <returns></returns>
+        private int IncrementAccordingToSize(int i)
+        {
+            if (_size % 2 == 0 && i == -1)
+            {
+                return i + 2;
+            }
+
+            return i + 1;
+        }
+
         private CubeletFace AssignFaceColor(CubeletFace face, Coordinate coordinate)
         {
-            if (!face.IsOfOrientation(coordinate))
+            if (!IsInCubeFace(coordinate, face.Orientation))
             { 
                 var color = new Color(Hue.Null, ' ', face.Color.ConsoleColor);
-                return new CubeletFace { Orientation = face.Orientation, Color = color, IsOfOrientation = face.IsOfOrientation };
+                
+                return new CubeletFace 
+                { 
+                    Orientation = face.Orientation, 
+                    Color = color
+                };
             }
 
             return face;

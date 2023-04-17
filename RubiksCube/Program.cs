@@ -5,18 +5,23 @@ using RubiksCube;
 
 var cube = new Cube();
 
-var rotations = new Instruction[]
+var instructions = new Instruction[]
 {
     new Instruction(Orientation.Front, Direction.Clockwise),
+    new Instruction(Orientation.Right, Direction.AntiClockwise),
+    new Instruction(Orientation.Top, Direction.Clockwise),
+    new Instruction(Orientation.Back, Direction.AntiClockwise),
+    new Instruction(Orientation.Left, Direction.Clockwise),
+    new Instruction(Orientation.Bottom, Direction.AntiClockwise),
 };
 
 Console.WriteLine("Initial State ...\n");
 cube.Display();
 
-foreach (var rotation in rotations)
+foreach (var instruction in instructions)
 {
-    var orientation = rotation.Orientation;
-    var direction = rotation.Direction;
+    var orientation = instruction.Orientation;
+    var direction = instruction.Direction;
 
     Console.WriteLine($"{direction} {orientation} Rotation ...\n");
 

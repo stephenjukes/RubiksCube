@@ -35,6 +35,10 @@ namespace RubiksCube
 
         public Coordinate Coordinate { get; set; }
 
+        public bool IsCenter => (new int[] { Coordinate.X, Coordinate.Y, Coordinate.Z })
+            .Where(c => c == 0)
+            .Count() >= 2;
+
         // Cannot be IEnumerable
         // https://stackoverflow.com/questions/43856404/object-property-not-updating
         public CubeletFace[] Faces { get; set; }
@@ -46,12 +50,8 @@ namespace RubiksCube
 
         public void Rotate(Orientation orientation, Direction direction)
         {
-            //Console.WriteLine(this);
-
             var clockwiseRotations = _clockwiseRotations[orientation];
-            var staticFaces = Faces
-                .Select(f => new CubeletFace1 { Orientation = f.Orientation, Color = f.Color })
-                .DeepClone();
+            var staticFaces = Faces.DeepClone();
 
             foreach (var face in Faces)
             {
@@ -67,8 +67,6 @@ namespace RubiksCube
 
                 face.Color = sourceFaceColor;
             }
-
-            //Console.WriteLine(this);
         }
 
         public override string ToString()

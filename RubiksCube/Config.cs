@@ -24,15 +24,15 @@ namespace RubiksCube
         // is this really config?
         public static ReadOnlyCollection<CubeletFace> InitialFaces => new List<CubeletFace>
         {
-            new CubeletFace { Orientation = Orientation.Top,    Color = Colors[Hue.Green],  IsOfOrientation = coordinate => coordinate.Y == 1 },
-            new CubeletFace { Orientation = Orientation.Bottom, Color = Colors[Hue.White],  IsOfOrientation = coordinate => coordinate.Y == -1 },
-            new CubeletFace { Orientation = Orientation.Front,  Color = Colors[Hue.Red],    IsOfOrientation = coordinate => coordinate.Z == -1 },
-            new CubeletFace { Orientation = Orientation.Back,   Color = Colors[Hue.Yellow], IsOfOrientation = coordinate => coordinate.Z == 1 },
-            new CubeletFace { Orientation = Orientation.Left,   Color = Colors[Hue.Blue],   IsOfOrientation = coordinate => coordinate.X == -1 },
-            new CubeletFace { Orientation = Orientation.Right,  Color = Colors[Hue.Orange], IsOfOrientation = coordinate => coordinate.X == 1 },
+            new CubeletFace { Orientation = Orientation.Top,    Color = Colors[Hue.Green] },
+            new CubeletFace { Orientation = Orientation.Bottom, Color = Colors[Hue.White] },
+            new CubeletFace { Orientation = Orientation.Front,  Color = Colors[Hue.Red] },
+            new CubeletFace { Orientation = Orientation.Back,   Color = Colors[Hue.Yellow] },
+            new CubeletFace { Orientation = Orientation.Left,   Color = Colors[Hue.Blue] },
+            new CubeletFace { Orientation = Orientation.Right,  Color = Colors[Hue.Orange] },
         }.AsReadOnly(); // This doesn't seem to be working as ReadOnly
 
-        public static readonly Dictionary<Orientation, Func<IEnumerable<Cubelet>, IEnumerable<IGrouping<int, Cubelet>>>> OrderCubelets
+        public static readonly Dictionary<Orientation, Func<IEnumerable<Cubelet>, IEnumerable<IGrouping<int, Cubelet>>>> ArrangeCubelets
             = new Dictionary<Orientation, Func<IEnumerable<Cubelet>, IEnumerable<IGrouping<int, Cubelet>>>>
         {
             { Orientation.Front, cubes => cubes.OrderByDescending(c => c.Coordinate.Y).ThenBy(c => c.Coordinate.X).GroupBy(c => c.Coordinate.Y) },
