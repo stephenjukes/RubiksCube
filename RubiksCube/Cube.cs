@@ -2,24 +2,23 @@
 {
     public class Cube
     {
-        private readonly List<Cubelet> _cubelets = new List<Cubelet>();
-
         private readonly int _size;
         private readonly int _boundaryCoordinate;
-        
+        private readonly List<Cubelet> _cubelets = new List<Cubelet>();
+
         public Cube(int size = 3)
         {
             _size = size; 
             _boundaryCoordinate = size / 2;
-
             PopulateCube();
+
         }
 
         public void Rotate(Orientation orientation, Direction direction)
         {
             var rotationRing = _cubelets
                 .Where(c => IsInCubeFace(c.Coordinate, orientation) && !c.IsCenter)
-                .OrderBy(c => direction == Direction.Clockwise ? Clockwise(c) : AntiClockwise(c))
+                .OrderBy(c => (direction == Direction.Clockwise ? 1 : -1) * Clockwise(c, orientation))
                 .ToArray();
 
             var staticCoordinates = rotationRing
@@ -51,16 +50,24 @@
             return cubeletsByFace[orientation](coordinate);
         }
 
-        private double AntiClockwise(Cubelet cubelet)
+        private double AntiClockwise(Cubelet cubelet, Orientation orientation)
         {
-            var dividend = cubelet.Coordinate.Y;
-            double divisor = cubelet.Coordinate.X;
-            if (divisor == 0) divisor = 0.0001; // approximation of division by 0
+            // Can we introduce an Orientation class to  remove the need for dictionaries?
+            var parametersByOrientation = new Dictionary<Orientation, RotationArrangement>
+            {
+                { Orientation.Front,    new RotationArrangement(cubelet.Coordinate.Y, cubelet.Coordinate.X) },
+                { Orientation.Back,     new RotationArrangement(cubelet.Coordinate.Y, -cubelet.Coordinate.X) },
+                { Orientation.Left,     new RotationArrangement(cubelet.Coordinate.Y, -cubelet.Coordinate.Z) },
+                { Orientation.Right,    new RotationArrangement(cubelet.Coordinate.Y, cubelet.Coordinate.Z) },
+                { Orientation.Top,      new RotationArrangement(cubelet.Coordinate.Z, cubelet.Coordinate.X) },
+                { Orientation.Bottom,   new RotationArrangement(-cubelet.Coordinate.Z, cubelet.Coordinate.X) },
+            };
 
-            return Math.Atan2(dividend, divisor);
+            return parametersByOrientation[orientation].OrderRank;
         }
 
-        private double Clockwise(Cubelet cubelet) => -AntiClockwise(cubelet);
+        private double Clockwise(Cubelet cubelet, Orientation orientation) => 
+            -AntiClockwise(cubelet, orientation);
 
         public void Display()
         {

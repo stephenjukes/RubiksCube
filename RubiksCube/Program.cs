@@ -1,6 +1,9 @@
 ﻿// See https://aka.ms/new-console-template for more information
 // Console.WriteLine("Hello, World!");
 
+// Modeled in accordance with https://rubiks-cube-solver.com/
+// Use 'floating hidden sides' for verification
+
 using RubiksCube;
 
 var cube = new Cube();
