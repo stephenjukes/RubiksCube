@@ -10,6 +10,7 @@ builder.SetBasePath(Directory.GetCurrentDirectory())
 
 IConfiguration config = builder.Build();
 
+// Use IOptions if possible
 var initialFaceColors = config
     .GetSection("InitialFaceColors")
     .GetChildren()
@@ -17,7 +18,7 @@ var initialFaceColors = config
         item => ToEnum<Orientation>(item.Key),
         item => ToEnum<Hue>(item.Value));
 
-var cube = new Cube();
+var cube = new Cube(initialFaceColors);
 
 var instructions = new Instruction[]
 {

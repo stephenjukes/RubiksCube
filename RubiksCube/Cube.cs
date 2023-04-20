@@ -2,13 +2,18 @@
 {
     public class Cube
     {
+        private readonly Dictionary<Orientation, Hue> _initialFaceColors;
         private readonly int _size;
         private readonly int _boundaryCoordinate;
         private readonly List<Cubelet> _cubelets = new List<Cubelet>();
         private readonly Dictionary<Orientation, CubeFace> _faces;
 
-        public Cube(int size = 3)
+        public Cube(
+            Dictionary<Orientation, Hue> initialFaceColors,
+            int size = 3
+            )
         {
+            _initialFaceColors = initialFaceColors;
             _size = size; 
             _boundaryCoordinate = size / 2;
             _faces = ConfigureFaces();
@@ -41,23 +46,22 @@
         public void Display()
         {
             // Better to group faces instead?
-            foreach (var initialFace in Config.InitialFaces)
+            foreach (var orientation in _initialFaceColors.Keys)
             {
                 // this could be done better
-                var face = _faces[initialFace.Orientation];
+                var face = _faces[orientation];
 
                 var cubeletsInFace = _cubelets
                     .Where(c => face.HasCoordinate(c.Coordinate));
 
-                var orderedFaces = Config
-                    .ArrangeCubelets[initialFace.Orientation](cubeletsInFace)
+                var orderedFaces = face.ArrangeForDisplay(cubeletsInFace)
                     .Select(group => string.Join(" ", group
-                        .Select(cube => cube.GetFace(initialFace.Orientation).Color.Symbol)));
+                        .Select(cube => cube.GetFace(orientation).Color.Symbol)));
 
                 var orderedString = string.Join("\n", orderedFaces);
 
                 // Abstract UI out
-                Console.WriteLine(initialFace.Orientation);
+                Console.WriteLine(orientation);
                 Console.WriteLine(orderedString);
                 Console.WriteLine();
             }
@@ -72,7 +76,11 @@
                     for(var z = -_boundaryCoordinate; z <= _boundaryCoordinate; z = IncrementAccordingToSize(z))
                     {
                         var coordinate = new Coordinate(x, y, z);
-                        var faces = Config.InitialFaces.Select(face => AssignFaceColor(face, coordinate));
+                        var faces = _initialFaceColors.ToArray()
+                            .Select(kvp => AssignFaceColor(
+                                new CubeletFace(kvp.Key, Config.Colors[kvp.Value]),
+                                coordinate)
+                            );
 
                         var cubelet = new Cubelet(coordinate, faces);
 
